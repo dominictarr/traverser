@@ -1,4 +1,5 @@
 var log = require('logger')
+//  , inspect = require(
 exports = module.exports = traverse
 
 function traverse (obj,opts){
@@ -11,6 +12,15 @@ function traverse (obj,opts){
 
   if(opts.after === true)
     opts.after = opts.each || opts.before
+
+    collect = opts.collect || {
+      new: function (){
+        return []}
+    , add: function (props){
+        with(props) collect.push(returned)
+      return 
+      }
+    }
 
   var halt = false
     , haltWith
@@ -25,13 +35,13 @@ function traverse (obj,opts){
         , path: [] 
         , seen: []
         , ancestors: []
+        , add: collect.add 
+        , new: collect.new
         , halt: function (value){
             haltWith = value
-            log('halt now!',haltWith)
             halt = true
           }
         , prune: function (){
-            log('prune!')
             prune = true
           }
         }
@@ -40,55 +50,59 @@ function traverse (obj,opts){
   function checkReference (object,props){
     props.reference = (-1 !== props.seen.indexOf(object))
 
-    log({seen: props.seen, object: object, reference: props.reference})
-    if (! props.reference) props.seen.push(object)
-
+    if (! props.reference) 
+      props.seen.push(object)
 
     props.circular = (-1 !== props.ancestors.indexOf(object))
   }
 
-  checkReference(obj,props)
-
-  props.after = ! (props.before = true)
-  if(opts.before)
-    opts.before(props)
+  var r = item (null,obj,null)
+  if(halt)
+    return haltWith
   if(prune)
-    return 
-
-//  checkReference(obj,props)
-  props.map = all(obj,props)
-
-  props.after = !(props.before = false)
-  if(opts.after)
-    return opts.after(props)
-
-  return props.map
-
-  function all(layer,props){
-    var keys = Object.keys(layer)
-      , collect = [] // options for setting collect, copy, or manual
-    props.ancestors.push(layer)
+    return r
+  return  r
   
-    for (key in layer){
-      collect.push(item(key))
+  function all(layer,props){
+    if(layer !== null)
+      props.ancestors.push(layer)
+    if(props.new)
+      props.collect = props.new(props)
 
+    var keys = Object.keys(layer)
+      , collect =  props.collect 
+    
+  
+    for (var key in layer){
+      //vvvinto function
+      var value = layer[key]
+      props.returned = item(key,value,layer)
+      
+      props.key = key
+      props.value = value
+      props.collect = collect
+      
+      if(props.collect && props.add)
+        props.add(props)
+      //^^^into function
       if(halt === true){
-        log('halt !',haltWith)
         return haltWith
         }
     }
 
-    props.ancestors.pop()
+    if(layer !== null)
+      props.ancestors.pop()
 
     return collect 
 
-    function item (key){
-      var value = layer[key]
-        , r
+  }
+    function item (key,value,layer){
+        var r
       props.key = key
       props.value = value
       props.parent = layer
-      props.path.push(key)
+      if(key !== null)
+        props.path.push(key)
       prune = false
 
       if('object' == typeof value && value != null){
@@ -99,22 +113,62 @@ function traverse (obj,opts){
           r = opts.before(props)
         if(prune)
           return r     
-        props.map = all(value,props)
+        all(value,props)
         
-        props.after = ! (props.before = false)
-        if(opts.after)
-          r = opts.after(props)
+        props.key = key
+        props.value = value
+        props.parent = layer
+      /*
+      is before and after a source of complications?
+      better to use around (each) function and pass an expand layer function in?
+      better to make wrap function to call next layer?
+      
+      that would certainly give more control than prune.
 
+      how to handle collecting?
+
+      have a series of methods:
+        each, // dont collect
+        collect, //return values
+        select, //if return value truthy
+        reject, //if return value falsey
+        find, //first truthy
+        copy, //make object
+        
+        --- by passing the prop setup function into the iterator
+        
+        {branch: b, leaf: l, iterator: i}
+        
+        iterator gets passed
+        props, with function: call
+        which takes key
+        
+        the purpose of this module?
+          seperate the aspects parts of traversing a datastruct
+          
+        what about using a idiomatic iterator that takes args (v,k)
+        
+        so make a call function present that interface.
+        but also curry it into a set of iterators.
+      */
+
+        props.after = ! (props.before = false)
+        if(opts.after){
+          r = opts.after(props)
+        }
       } else if (opts.each) {
          props.after = props.before = false
          r = opts.each(props)
       }
 
-      props.path.pop()
+      if(key !== null)
+        props.path.pop()
       return r
     }
-  }
+
 }
+
+//exports.set(key,value)
 
 exports.rGet = rGet
 function rGet (obj,path){
@@ -125,4 +179,34 @@ function rGet (obj,path){
     obj = obj[key]
   })
   return obj
+}
+
+exports.topology = topology 
+function topology (obj){
+/*
+  branches but no leaves
+*/
+}
+
+exports.copy = copy
+function copy(obj,opts){
+  var collector = 
+    { new: function (props){
+        return new props.value.constructor() }
+    , add: function (props){
+        with(props)
+          collect[key] = returned
+        return } 
+    }
+    opts = opts || {}
+    opts.each = opts.each || each
+    opts.after = opts.after || each
+    opts.collect = collector
+    
+  return traverse(obj,opts)
+
+  function each(props){
+    with(props)
+      return after ? collect : value
+  }
 }

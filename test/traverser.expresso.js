@@ -1,6 +1,7 @@
 
 var describe = require('should').describe
   , t = require('traverser')
+  , inspect = require('inspect')
   , log = require('logger')
 exports ['calls search function with properties object'] = function(test){
   var obj = {}
@@ -18,9 +19,6 @@ exports ['iterates over all properties in an object'] = function (test){
     , checked = false
   t(obj,function (props){//calls this function on every element.
     with(props){
-      log(key)
-      log(value)
-      log(parent)
       
       if(key){
         describe(obj[key],"obj[key=" + key + ']')
@@ -46,9 +44,7 @@ exports ['iterates over all properties in an object, at each depth'] = function 
     , checks = 0
   t(obj,function (props){//calls this function on every element.
     with(props){
-      log(key , ':' , value)
-      log(parent)
-      
+
       if(key){//only null on root object
         describe(parent[key],"parent[key=" + key + ']')
           .should.eql(value)
@@ -86,9 +82,8 @@ exports ['can set to call functions on object after keys'] = function (test){
   function each (props){
     with (props){
       if(after){
-        return map.join(',')          
+        return collect.join(',')          
       } else {
-        log(key, ':', value,  parent)
         return props.value * 10
       }
     }
@@ -134,7 +129,6 @@ exports['can stop by calling halt(return value)'] = function (test){
   
   function each (props){
     if(props.value > 10){
-      log(props.path,':',props.value)
       props.halt([].concat(props.path))
     }
   }
@@ -207,7 +201,6 @@ exports['tells you if this object is a circular reference.'] = function (test){
   
   function branch3 (props){
     if(props.circular){
-      log('circuar path:',props.path)
       return props.prune()
     }
   }
@@ -217,11 +210,10 @@ exports['tells you if this object is a circular reference.'] = function (test){
     doing 'clever' stuff like this can put you on a balance between makeing 
     something useful, or just being twee.
     
-    my next question, is what happens to map if i'm checking to prune repeated values?
+    my next question, is what happens to collect if i'm checking to prune repeated values?
     
     I might need a way to preprune..
   */
-
 
 exports ['can replace circular and references'] = function (test){
 
@@ -232,7 +224,6 @@ exports ['can replace circular and references'] = function (test){
     t(obj,{each:each, after: each, before: each})
   describe(e,'')
     .should.eql("{a: 1, b: 2, [10, 20, 30, [Circular]], e: 1000, [Reference]}")
-  log(e)
   
   function each(props){
     with(props)
@@ -242,10 +233,141 @@ exports ['can replace circular and references'] = function (test){
         return circular ? '[Circular]' : '[Reference]'
       }
     } else if(after){
-      var o = map.join(', ')
-      return (parent instanceof Array ? ['[',o,']'] : ['{',o,'}']).join('')
+      var o = collect.join(', ')
+      return (value instanceof Array ? ['[',o,']'] : ['{',o,'}']).join('')
     } else {
       return (parent instanceof Array ? value : key + ': ' + value)
     }
   }
 }
+
+exports ['multiple ways to collect values'] = function (test){
+
+  var obj = {a: 1, b: 2, c: [10,20,30], e : 1000}
+
+  var collector = 
+    { new: function (props){
+        return new props.value.constructor() }
+    , add: function (props){
+        with(props)
+          collect[key] = returned
+        return } 
+    }
+
+  var e = 
+    t(obj,{each:each, after: each , collect: collector})
+
+  describe(e, "copied object")
+    .should.eql(obj)
+
+  describe(t.copy(e), "copied object")
+    .should.eql(obj)
+
+    function each (props){
+      with(props)
+        if(before){
+         //before should see an empty props item.
+         //at property add return value to copy.
+          describe(collect, "collect before traversing properties")
+            .should.be.instanceof(parent.constructor)
+         return value
+        } else if (after) {
+         //at after, collect should be collection from object.
+          if(parent)
+            describe(collect, "collect after")
+              .should.be.instanceof(parent.constructor)
+         return collect 
+        } else {
+          return value
+        }
+    }
+}
+
+
+exports ['can collect branches'] = function (test){
+  var obj = {a: 1, b: 2, c: [10,20,30], e : 1000}
+    obj.c.push(obj)
+    obj.d = obj.c
+    obj.f = 'ffff'
+
+  var refs = []
+    t(obj, {before: listRefs}) // collect references
+
+  function listRefs (props){
+      if(props.before && props.reference){
+        refs.push(props.value)
+        props.prune()
+      }
+  }
+
+  var rootBefore = false
+    , rootAfter = false
+    , e = 
+  t(obj, {each: each, after: each, before: each})
+
+  describe(rootBefore,"whether before is called on the root object")
+    .should.eql(true)
+  describe(rootAfter,"whether after is called on the root object")
+    .should.eql(true)
+
+  function each(props){
+    if(props.parent == null && props.before) rootBefore = true
+    if(props.parent == null && props.after) rootAfter = true
+    var index = refs.indexOf(props.value)
+    if(props.before){
+      if(props.reference){
+        props.prune()
+        return 'var' + index
+        }
+    } else if(props.after){
+      if(-1 !== index) {
+        return 'var' + index + ' =[' + props.collect.join(', ') + ']'
+      }
+      return props.collect
+    } else {
+      return props.value
+    }
+  }
+}
+exports ['always has correct values, parents, keys, for objects, paths before and after.'] = function (test){
+  var objects = 
+    [ {a :1}
+    , [1,2,3]
+    , [1,2,3,[],[5,6,7]]
+    ]
+
+  objects.forEach(check)
+  
+  function check(object){
+    var checked = {}
+
+    t(object, {before: before, after: after})
+    
+    function before (props){
+      checked[props.path] = 
+        { before: true
+        , value: props.value
+        , parent: props.parent
+        , key: props.key
+  //ancestors
+        }
+      if(props.parent)
+      describe(props.path[props.path.length - 1],"last item in path")
+        .should.eql(props.key)
+    }
+    function after (props){
+      describe(checked[props.path],"checked object at path:" + inspect(props.path))
+        .should.have.property('before',true)
+    //  log("PROPS:",props)
+      //log("CHECKED:",checked[props.path])
+      var it =
+        describe(props,"after object at path:" + inspect(props.path))
+      it.should.have.property('key',checked[props.path].key)
+      it.should.have.property('parent').eql(checked[props.path].parent)
+      checked[props.path].after = true
+    }
+  }
+}
+/**/
+
+
