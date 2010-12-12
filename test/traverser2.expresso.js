@@ -198,10 +198,8 @@ exports ['easy to render a string'] = function (test){
 
     var op = p instanceof Array ? '[' : '{'
       , cl = p instanceof Array ? ']' : '}'
-
     return op + p.map().join(' ') + cl    
   }
-
 }
 /**/
 /*
@@ -255,4 +253,65 @@ exports ['can pre-traverse to check for references, complex'] = function (test){
   simple way is to pass in a function to decide...
   ...be useful if you want to treat particular things as branches or not.
 
+  maybe options to assume it is a 'tree','dag','cyclic' (and don't check for references if it's tree)
 */
+
+exports ['can control what is considered a branch and what is a leaf'] = function (test){
+
+//for example: function can have properties, so they are branches.
+
+  var x = function (){return "SOURCE CODE"}
+    x.x = x
+    x.y = "yyyy"
+  var brackets =
+    { 'Array' : ['[',']']
+    , 'Object': ['{','}']
+    , 'Function': ['<function ()','>']
+    }
+  var study =
+      [ [x, '<function ()x:@ y:\'yyyy\'>',true]
+      , [[x],'[<function ()x:@ y:\'yyyy\'>]',true]
+      , [[1,2,3],'[1 2 3]',true]
+      , [x, "function (){return \"SOURCE CODE\"}",false]
+      , [[x],'[function (){return \"SOURCE CODE\"}]',false] ]
+    , branchChecked = false
+
+  study.forEach(function (e,k){
+    branchChecked = false
+    var r
+    if(e[2]) {
+      r = traverser(e[0],{branch: branch, leaf: leaf, isBranch: isBranch})
+      test.ok(branchChecked)
+    } else {
+      r = traverser(e[0],{branch: branch, leaf: leaf})
+    }
+    log(k,r)
+    log(k,e[0])
+
+    test.equal(branchChecked, e[2])
+
+    test.equal(r,e[1])
+  })
+  
+  function key(p,rest){
+    return (isNaN(p.key) ? p.key +':' : '') + rest
+    }
+  
+  function leaf (p){
+    return key(p,'string' === typeof p.value ? "'" + p.value + "'" : '' + p.value) }
+
+  function branch (p){
+    if(p.reference)
+      return key(p,p.circular ? '@' : '^')
+
+    var op = brackets[p.value.constructor.name][0]
+      , cl = brackets[p.value.constructor.name][1]
+    return key(p,op + p.map().join(' ') + cl)
+  }
+
+  function isBranch(p){
+    branchChecked = true
+    return brackets[p.value.constructor.name] != null
+  }
+}
+

@@ -5,6 +5,24 @@ var inspect = require('inspect')
 
 module.exports = traverse
 
+exports.isObject = isObject
+exports.isComplex = isComplex
+
+function isObject (props){
+  return ('object' === typeof props.value)
+}
+var complex =
+  { 'function': true
+  , 'object': true
+  , 'string': false
+  , 'boolean': false
+  , 'number': false
+  , 'undefined': false
+}
+function isComplex (props){
+  return complex[typeof props.value]
+}
+
 function traverse (object,opts){
 
   if('function' == typeof opts)
@@ -17,9 +35,13 @@ function traverse (object,opts){
   if(!opts.branch)
     opts.branch = function (p){return p.iterate()}
 
+  if(!opts.isBranch)
+    opts.isBranch = exports.isObject
+
   var funx = 
       { map: map
       , each: each 
+      , find: find
       , copy: copy }
 
   if('string' == typeof opts.iterator){
@@ -43,6 +65,7 @@ function traverse (object,opts){
         , each: curry([each],iterate)
         , map: curry([map],iterate)
         , copy: curry([copy],iterate)
+        , find: curry([find],iterate)
         , iterate: curry(iterate,[opts.iterator])
         }
 
@@ -85,6 +108,15 @@ function traverse (object,opts){
       func(value,key,object)
     }
   }
+  function find (object,func){
+    for( key in object){
+      var value = object[key]
+      var r = func(value,key,object)
+      if(r){
+        return value
+     }
+    }
+  }
   function map (object,func){
     var m = []
     for( key in object){
@@ -110,7 +142,7 @@ function traverse (object,opts){
     props.key = key
     props.value = value
 
-    if('object' === typeof value){
+    if(opts.isBranch(props)){
       var index = 
         { seen: props.seen.indexOf(props.value)
         , ancestors: props.ancestors.indexOf(props.value) }
@@ -138,3 +170,5 @@ function traverse (object,opts){
   
  return makeCall(object,null)
 }
+
+
