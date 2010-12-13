@@ -26,6 +26,8 @@ function isComplex (props){
 
 function traverse (object,opts){
 
+  opts.async = false
+  
   if('function' == typeof opts)
     opts = {each: opts}
 
@@ -86,29 +88,32 @@ function traverse (object,opts){
     var _parent = props.parent
       , _key = props.key
       , _value = props.value
-      , returned 
+      , r
 
-    props.ancestors.push(props.value) //make immutable
+    props.ancestors.push(props.value)
     props.parent = props.value
-    returned = iterator(props.value,makeCall)
+    r = iterator(props.value,makeCall)
+    //seperate this function for async
+    if(!opts.async) return c(r)
+    function c(r){
+      props.key = _key
+      props.value = _value
+      props.parent = _parent
 
-    props.key = _key
-    props.value = _value
-    props.parent = _parent
-
-    props.ancestors.pop()
-    return returned//returned will be ignored if async
+      props.ancestors.pop()
+      return r //returned will be ignored if async
+    }
   }
 
   function makeCall(value,key,next){//next func here if async.
     var r
     //using immutable objects would simplify this greatly, 
-    //because I could not have to unstack props.
+    //because I could not have to teardown...
+    //maybe. would have to not depend on closures.
     if(key !== null)
       props.path.push(key)
     props.key = key
     props.value = value
-
 
     if(opts.isBranch(props)){
       var index = 
@@ -126,17 +131,23 @@ function traverse (object,opts){
       ;(props.reference = (-1 !== index.seen)) 
         || props.seen.push(value)
 
-      r = opts.branch(props,next)//,next if async
+      r = opts.branch(props,c)
     } else {
-      r = opts.leaf(props,next)
+      r = opts.leaf(props,c)
     }
     //finish up, if sync
-    return (function (){
-    if(key !== null)
-      props.path.pop()
-    return r
-    })()
+    if(!opts.asynct) return c(r)
+    function c (r){
+      if(key !== null)
+        props.path.pop()
+      if(opts.asynct) next(r)
+      return r
+    }
   }
   
- return makeCall(object,null)
+ return makeCall(object,null,opts.done)
+ /*
+  I THINK IT'S gonna work ASYNC. write a test.
+ 
+ */
 }

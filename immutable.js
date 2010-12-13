@@ -2,7 +2,13 @@
 var log = require('logger')
 
 module.exports = exports = immutable
+/*
+  what about giving immutable a histroy function?
+  toArray(key)
 
+  I'm trying to be way to clever.
+  just do it with max elegance & worry about optomisations when you have measurements.
+*/
 function immutable (obj){
   Object.defineProperty(obj,'mutate',
     { enumerable: false
@@ -12,30 +18,10 @@ function immutable (obj){
         return immutable(_obj)
       }
     })
-/*  Object.defineProperty(obj,'keys',
-    { enumerable: false
-    , value: 
-      function (_obj){
-        _obj.__proto__ = obj
-        return immutable(_obj)
-      }
-    })*/
   Object.freeze(obj)
   return obj
 }
 exports.Array = empty
-
-/*function empty() {
-  return immutable({ length: 0
-  , push: function(x){
-      var n = {}
-      n[this.length] = x
-      n['length'] = this.length + 1
-      return this.mutate(n)
-    }
-  })
-}
-*/
 
 //I've added so many functions inside  this
 //i'm not sure this is a good way.
