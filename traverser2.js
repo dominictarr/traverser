@@ -2,11 +2,12 @@
 var inspect = require('inspect')
   , log = require('logger')
   , curry = require('curry')
+  , sync = require('./iterators').sync
 
 module.exports = traverse
-
 exports.isObject = isObject
 exports.isComplex = isComplex
+
 
 function isObject (props){
   return ('object' === typeof props.value)
@@ -38,18 +39,13 @@ function traverse (object,opts){
   if(!opts.isBranch)
     opts.isBranch = exports.isObject
 
-  var funx = 
-      { map: map
-      , each: each 
-      , find: find
-      , copy: copy }
-
   if('string' == typeof opts.iterator){
     var s = opts.iterator
-    opts.iterator = funx[s]
+    opts.iterator = sync[s]
     
     if (!opts.iterator)
-      throw new Error('\'' + s + '\' is not the name of a traverse iterator. try one of [' + Object.keys(funx) + ']')
+      throw new Error('\'' + s + '\' is not the name of a traverse iterator.'
+        + ' try one of [' + Object.keys(sync) + ']')
     }
 
   var props = 
@@ -62,12 +58,14 @@ function traverse (object,opts){
         , path: [] 
         , seen: []
         , ancestors: []
-        , each: curry([each],iterate)
-        , map: curry([map],iterate)
-        , copy: curry([copy],iterate)
-        , find: curry([find],iterate)
         , iterate: curry(iterate,[opts.iterator])
         }
+
+  //setup iterator functions -- DIFFERENT IF ASYNC
+  Object.keys(sync).forEach(function(key){
+    var func = sync[key]
+    props[key] = curry([func],iterate)
+  })
 
   if(opts.pre){
     props.referenced = false
@@ -99,48 +97,17 @@ function traverse (object,opts){
     props.parent = _parent
 
     props.ancestors.pop()
-    return returned
+    return returned//returned will be ignored if async
   }
 
-  function each (object,func){
-    for( key in object){
-      var value = object[key]
-      func(value,key,object)
-    }
-  }
-  function find (object,func){
-    for( key in object){
-      var value = object[key]
-      var r = func(value,key,object)
-      if(r){
-        return value
-     }
-    }
-  }
-  function map (object,func){
-    var m = []
-    for( key in object){
-      var value = object[key]
-      m.push(func(value,key,object))
-    }
-    return m
-  }
-  function copy (object,func){
-    var m = new object.constructor
-    for( key in object){
-      var value = object[key]
-      m[key] = func(value,key,object)
-    }
-    return m
-  }
-  
-  function makeCall(value,key){
+  function makeCall(value,key){//next func here if async.
     var r
 
-    if(key !== null)
+    if(key !== null)//if move all this into iterate, won't need this check, because it won't be called on root.
       props.path.push(key)
     props.key = key
     props.value = value
+
 
     if(opts.isBranch(props)){
       var index = 
@@ -158,17 +125,17 @@ function traverse (object,opts){
       ;(props.reference = (-1 !== index.seen)) 
         || props.seen.push(value)
 
-      r = opts.branch(props)
+      r = opts.branch(props)//,next if async
     } else {
       r = opts.leaf(props)
     }
-
+    //finish up, if sync
+    return (function (){
     if(key !== null)
       props.path.pop()
     return r
+    })()
   }
   
  return makeCall(object,null)
 }
-
-

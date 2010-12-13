@@ -315,3 +315,14 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
   }
 }
 
+
+exports ['has min and max iterators'] = function (test){
+  var obj = [10,20,30,40,[200,4,6600,2],564]
+    , max = traverser(obj,{iterator: 'max'})
+    , min = traverser(obj,{iterator: 'min'})
+
+  describe (max, 'max in ' + inspect(obj))
+    .should.eql(6600)
+  describe (min, 'min in ' + inspect(obj))
+    .should.eql(2)
+}
