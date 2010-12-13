@@ -70,7 +70,6 @@ var curry = require('curry')
 function async(object,func,collect,done){
   var keys = Object.keys(object)
     , i = 0
-    next.stop = done
     item()
     function next(r){
       if(collect){//call collect(r,key,value,object,done)

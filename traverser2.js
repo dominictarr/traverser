@@ -88,7 +88,7 @@ function traverse (object,opts){
       , _value = props.value
       , returned 
 
-    props.ancestors.push(props.value)
+    props.ancestors.push(props.value) //make immutable
     props.parent = props.value
     returned = iterator(props.value,makeCall)
 
@@ -100,10 +100,11 @@ function traverse (object,opts){
     return returned//returned will be ignored if async
   }
 
-  function makeCall(value,key){//next func here if async.
+  function makeCall(value,key,next){//next func here if async.
     var r
-
-    if(key !== null)//if move all this into iterate, won't need this check, because it won't be called on root.
+    //using immutable objects would simplify this greatly, 
+    //because I could not have to unstack props.
+    if(key !== null)
       props.path.push(key)
     props.key = key
     props.value = value
@@ -125,9 +126,9 @@ function traverse (object,opts){
       ;(props.reference = (-1 !== index.seen)) 
         || props.seen.push(value)
 
-      r = opts.branch(props)//,next if async
+      r = opts.branch(props,next)//,next if async
     } else {
-      r = opts.leaf(props)
+      r = opts.leaf(props,next)
     }
     //finish up, if sync
     return (function (){
