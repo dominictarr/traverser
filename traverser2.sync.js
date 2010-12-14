@@ -57,10 +57,9 @@ function traverse (object,opts){
         , path: [] 
         , seen: []
         , ancestors: []
-        , iterate: curry(iterate,[opts.iterator])
+        , iterate: curry([opts.iterator],iterate)
         }
 
-  //setup iterator functions -- DIFFERENT IF ASYNC
   Object.keys(sync).forEach(function(key){
     var func = sync[key]
     props[key] = curry([func],iterate)
@@ -96,17 +95,16 @@ function traverse (object,opts){
     props.parent = _parent
 
     props.ancestors.pop()
-    return returned//returned will be ignored if async
+    return returned
   }
 
-  function makeCall(value,key){//next func here if async.
+  function makeCall(value,key){
     var r
 
-    if(key !== null)//if move all this into iterate, won't need this check, because it won't be called on root.
+    if(key !== null)
       props.path.push(key)
     props.key = key
     props.value = value
-
 
     if(opts.isBranch(props)){
       var index = 
@@ -124,16 +122,13 @@ function traverse (object,opts){
       ;(props.reference = (-1 !== index.seen)) 
         || props.seen.push(value)
 
-      r = opts.branch(props)//,next if async
+      r = opts.branch(props)
     } else {
       r = opts.leaf(props)
     }
-    //finish up, if sync
-    return (function (){
     if(key !== null)
       props.path.pop()
     return r
-    })()
   }
   
  return makeCall(object,null)

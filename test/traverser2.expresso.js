@@ -1,7 +1,7 @@
 //traverser2.expresso.js
 
 var describe = require('should').describe
-  , traverser = require('traverser/traverser2')
+  , traverser = require('traverser/traverser2.sync')
   , inspect = require('inspect')
   , log = require('logger')
 
