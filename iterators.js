@@ -1,9 +1,20 @@
 //iterators
+var log = require('logger')
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Sync
 
 
+*/
+/*
+  i've discovered that js has some querks about properties being iteratred on
+  for example: for (i in obj) will include prototype properties,
+          but Object.keys(obj) will not.
+          
+          for greatest flex, pass in a custom function to gen prop list.
+
+          when you are say, comparing objects, the correctness of iteration is essential.
 */
 
 exports.sync = {
@@ -65,16 +76,24 @@ Async
 
 
 */
+// keys function consistant with for
+function keysFor(obj){
+  a = []
+  for(i in obj)
+    a.push(i)
+  return a
+}
+
 var curry = require('curry')
 
 function async(object,func,collect,done){
-  var keys = Object.keys(object)
+  var keys = keysFor(object)
     , i = 0
     item()
     function next(r){
       if(collect){//call collect(r,key,value,object,done)
-        var r = collect(r,keys[i],object[keys[i]],object)
-        if(r) return done(r)
+        var stop = collect(r,keys[i],object[keys[i]],object)
+        if(stop) return done(stop)
       } 
       i ++ 
       if(i < keys.length)
@@ -102,8 +121,9 @@ exports.async = {
   },
   map: function (object,func,done){
     var map = []
-    async(object,func,collect,curry([map],done))
+    async(object,func,collect,curry([map],done))//curry creates a closure around map
     function collect(r,k,v){
+    //  log('map',map,'push(',r,')')
       map.push(r)
     }
   },

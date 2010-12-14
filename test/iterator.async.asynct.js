@@ -18,6 +18,12 @@ function value (v,k,n,o){
     .should.eql(o[k],v)
   n(v)
 }
+function valuePlus (v,k,n,o){
+//  log(v,k,n,o)
+  describe(v,'value at object[' + k + '] in ' + arguments.callee.name)
+    .should.eql(o[k],v)
+  n('object' === typeof v ? v : v + 1)
+}
 
 exports.max = function (test){
   var l = [234,543,1,44,5555,534,6,456]
@@ -61,15 +67,16 @@ exports.copy = function (test){
 }
 
 exports.map = function (test){
-  var l = [234,543,1,44,5555,534,6,456]
+  var l =  [234,543,1,44,5555,534,6,456]
+    , l1 = [235,544,2,45,5556,535,7,457]
     , o = {a: 123, b: 123, c:'sdf', l: l}
-    , m = [123,123,'sdf',l]
-    async.map(l,value,c)
+    , m = [124,124,'sdf1',l]
+    async.map(l,valuePlus,c)
     function c(r){
       describe(r,'map()')
-        .should.eql(l)
+        .should.eql(l1)
 
-      async.map(o,value,c)
+      async.map(o,valuePlus,c)
       function c(r){
 
       describe(r,'map()')
@@ -109,6 +116,7 @@ exports.each = function (test){
       n()
     }
 }
+
 exports.find = function (test){
   var l = [234,543,1,44,5555,'ffffffffffff',534,6,456]
     , o = {a: 123, b: 123, c:'sdf', l: l}

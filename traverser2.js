@@ -3,6 +3,7 @@ var inspect = require('inspect')
   , log = require('logger')
   , curry = require('curry')
   , sync = require('./iterators').sync
+  , async = require('./iterators').async
 
 module.exports = traverse
 exports.isObject = isObject
@@ -23,31 +24,50 @@ var complex =
 function isComplex (props){
   return complex[typeof props.value]
 }
+function defaultLeaf(p){
+  return p.value
+}
+function defaultBranch (p){
+  return p.iterate()
+}
+function defaultLeafAsync(p,next){
+  next(p.value)
+}
+function defaultBranchAsync (p,next){
+  //log('DEFAULT BRANCH ASYNC')
+  p.iterate(next)
+}
 
-function traverse (object,opts){
+function traverse (object,opts,done){
 
-  opts.async = false
-  
   if('function' == typeof opts)
-    opts = {each: opts}
+    opts = { each: opts
+           , done: done }
+
+  opts.async = !!(opts.done)//async mode if done is defined.
 
   if (opts.each)
     opts.leaf = opts.branch = opts.each
   if(!opts.leaf)
-    opts.leaf = function (p){return p.value}
+    opts.leaf = opts.async ? defaultLeafAsync : defaultLeaf
   if(!opts.branch)
-    opts.branch = function (p){return p.iterate()}
+    opts.branch = opts.async ? defaultBranchAsync : defaultBranch
 
   if(!opts.isBranch)
     opts.isBranch = exports.isObject
 
+  var cont = opts.done ? async : sync
+
+  if(!opts.iterator)
+    opts.iterator = 'map'
+
   if('string' == typeof opts.iterator){
     var s = opts.iterator
-    opts.iterator = sync[s]
+    opts.iterator = cont[s]
     
     if (!opts.iterator)
       throw new Error('\'' + s + '\' is not the name of a traverse iterator.'
-        + ' try one of [' + Object.keys(sync) + ']')
+        + ' try one of [' + Object.keys(cont) + ']')
     }
 
   var props = 
@@ -60,12 +80,12 @@ function traverse (object,opts){
         , path: [] 
         , seen: []
         , ancestors: []
-        , iterate: curry(iterate,[opts.iterator])
+        , iterate: curry([opts.iterator],iterate)
         }
 
   //setup iterator functions -- DIFFERENT IF ASYNC
-  Object.keys(sync).forEach(function(key){
-    var func = sync[key]
+  Object.keys(cont).forEach(function(key){
+    var func = cont[key]
     props[key] = curry([func],iterate)
   })
 
@@ -84,29 +104,38 @@ function traverse (object,opts){
     props.repeated = refs
   }
         
-  function iterate(iterator){
+  function iterate(iterator,done){
     var _parent = props.parent
       , _key = props.key
       , _value = props.value
+      , _index = props.index
+      , _referenced = props.referenced
       , r
-
+    //log('DONE()',done)
     props.ancestors.push(props.value)
     props.parent = props.value
-    r = iterator(props.value,makeCall)
+    props.next = c
+    r = iterator(props.value,makeCall,c)
     //seperate this function for async
     if(!opts.async) return c(r)
     function c(r){
+      //log('teardown branch ',r)
+      
       props.key = _key
       props.value = _value
       props.parent = _parent
+      props.index = _index
+      if(opts.pre)
+        props.referenced = _referenced
 
       props.ancestors.pop()
+      if(opts.async) done(r)
       return r //returned will be ignored if async
     }
   }
 
   function makeCall(value,key,next){//next func here if async.
-    var r
+    var r, index
     //using immutable objects would simplify this greatly, 
     //because I could not have to teardown...
     //maybe. would have to not depend on closures.
@@ -114,9 +143,12 @@ function traverse (object,opts){
       props.path.push(key)
     props.key = key
     props.value = value
+    if(opts.async)
+      props.next = c
 
     if(opts.isBranch(props)){
-      var index = 
+      //log("IS BRANCH!",props.value)
+      index = 
         { seen: props.seen.indexOf(props.value)
         , ancestors: props.ancestors.indexOf(props.value) }
         
@@ -133,14 +165,16 @@ function traverse (object,opts){
 
       r = opts.branch(props,c)
     } else {
+      //log("IS CALLED!",props.value)
       r = opts.leaf(props,c)
     }
     //finish up, if sync
-    if(!opts.asynct) return c(r)
+    if(!opts.async) return c(r)
     function c (r){
+      //log('teardown called ',r)
       if(key !== null)
         props.path.pop()
-      if(opts.asynct) next(r)
+      if(opts.async) next(r)
       return r
     }
   }
