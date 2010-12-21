@@ -90,7 +90,7 @@ function trees (a,b){
   return diff
 }
 
-function subtree(self,other,diff){
+function subtree(self,other,diff,allow,soft){
   var matched = true
     , x = styles.green
   diff.message = traverser(self,{branch: branch, leaf: leaf, isBranch: traverser.isComplex})
@@ -105,15 +105,23 @@ function subtree(self,other,diff){
       x = styles.red
     }
     if(p.circular)
-      throw new Error("infinite tree. cannot compare tree due to circular reference")
+      if(allow) {
+        if(ov !== p.value)
+          matched = false
+        return '[circular]'
+      } else
+        throw new Error("infinite tree. cannot compare tree due to circular reference\n" 
+                      + "self:" + inspect(self) + '\n'
+                      + "other:" + inspect(other) )
+
     if(ov === p.value)
       return group(p,x)
     return group(p,x)
-//    p.each()
   }
   function leaf(p){
     var x = styles.green
-    if(p.value !== rGet(p.path,other)){
+      , ov = rGet(p.path,other)
+    if((!soft && p.value !== ov) || (soft && p.value != ov)){
       matched = false
       x = styles.red
     }
@@ -200,5 +208,75 @@ function group (p,style){
     , join = ', '
     items.forEach(function (x){ length += ('' + x).length})
   return pre + key(p,style(b[0]) + items.join(join) + style(b[1])) + post
+}
+
+function format(s,ml){
+  if(!/\n/.exec(s))
+    return s
+  if(ml === undefined && s.length > 80)
+    ml = true
+  s = s.replace(/\n/g,ml ? '\\n\n' : '\\n').split('\n')
+  if(/\\u\d+\[\d+m/.exec(s[s.length - 1]))
+    s.pop()
+  
+  return '\n( ' +
+    s.map(function (x){
+      return '\'' + x + '\''
+    })
+    .join('\n+ ') + ')\n'
+}
+
+exports.string = function (x,y){
+  var diff = 
+      { left:{}
+      , right:{} 
+      , eq: x == y
+      }
+  if(isNaN(x) && isNaN(y) && ('number' === typeof x || 'number' === typeof y)){
+    diff.message = styles.red(x) + ' != ' + styles.red(y) + ' (this is correct js: WTF?)'
+    diff.at = 0
+    return diff
+    }
+
+  x = '' + x
+  y = '' + y
+
+  var l = '' + x, s = '' + y
+  if(y.length > x.length){
+    l = y; s = x
+  }
+  if(!diff.eq)
+    for(i in l){
+      if (y[i] !== x[i]){
+        diff.left.message = 
+          '' + styles.green(x.slice(0,i) || '') 
+             + styles.red(x.slice(i,x.length) || '')
+        diff.right.message = 
+          '' + styles.green(y.slice(0,i) || '') 
+             + styles.red(y.slice(i,y.length) || '')
+             
+        diff.message = 
+            format(diff.left.message)
+          + (diff.eq ? ' == ' : ' != ') 
+          + format(diff.right.message)
+        diff.at = i
+        return diff
+      }
+    }
+  diff.message = styles.green(x) + ' == ' + styles.green(y)
+  return diff
+}
+
+exports.deep = function (left,right){
+  var diff = 
+      { left:{}
+      , right: {} 
+      , eq: false
+      }
+  subtree(left,right,diff.left,true,true)
+  subtree(right,left,diff.right,true,true)
+  diff.eq = diff.left.eq && diff.right.eq
+  diff.message = diff.left.message + (diff.eq ? ' == ' : ' != ') + diff.right.message
+  return diff
 }
 

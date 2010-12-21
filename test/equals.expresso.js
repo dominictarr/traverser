@@ -55,9 +55,6 @@ exports ['can compare trees correctly'] = function (test){
   simplest solution: don't allow it. throw infinite tree exception.
 
 */
-      
-  //    d.push(d)
-      
  eq.forEach(function (e,k){
     var r
   if(e[2] == Error){
@@ -120,6 +117,47 @@ exports ['can check for structure type tree/dag/cyclic'] = function (test){
     test.equal(got,type, 'expected ' + inspect(t) + " to be a '" + type + "', but got '" + got + "'")
     test.equal(func(t),true, 'expected ' + func.name + "(" + inspect(t) + ") to be true")
   }
-
-
 }
+
+exports ['string equals'] = function (test){
+  var
+    neq = 
+      [ [ 'a','b' ,0 ]
+      , [ 'aa','ab',1 ] 
+      , [ 'aabababbbbabbaaw','aabababbbbabxbaa',12 ]
+      , [ 'aab\naba\nbbb\nbab\nnba\n','aab\naba\nbbb\nbab\nnba\n\n',20 ]
+      , [ 3.141592653,22/7,4 ]
+      , [ ' _____         _\n' 
+        + '|_   _|__  ___| |_\n'
+        + '  | |/ _ \\/ __| __|\n'
+        + '  | |  __/\\__ \\ |_\n'
+        + '  |_|\\___||___/\\__|\n'
+        , ' _____         _\n' 
+        + '|_   _|__  ___| |_\n'
+        + '  | |/ _ \/ __| __|\n'
+        + '  | |  __/\__ \ |_\n'
+        + '  |_|\___||___/\__|\n'
+        , 45]
+      , [true, false,0]
+      , [null, undefined]
+      , [0, false]
+      , [12352,NaN,0]
+      , [NaN,NaN,0]//stupid, but consistant with ==
+      , ['NaN',NaN,0]//stupid, but consistant with ==
+      ]
+
+  neq.forEach(function (n){
+    var r = equals.string(n[0],n[1])
+    var eq = !(n.length == 3)
+    test.equal(r.eq,eq)
+    test.ok(r.message,"message property should exist")
+    log('string equals:', r.message)
+    if(!eq)
+      test.equal(r.at,n[2])
+  })
+}
+/*
+exports ['deep equals'] = function (test){
+   
+
+}*/
