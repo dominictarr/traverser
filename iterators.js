@@ -42,7 +42,7 @@ exports.sync = {
     return m
   },
   copy: function (object,func){
-    var m = new object.constructor
+    var m = (object instanceof Array ? [] : {})
     for( key in object){
       var value = object[key]
       m[key] = func(value,key,object)
@@ -128,7 +128,7 @@ exports.async = {
     }
   },
   copy: function (object,func,done){
-    var map = new object.constructor
+    var map = (object instanceof Array ? [] : {})
     async(object,func,collect,curry([map],done))
     function collect(r,k,v){
       map[k] = (r)

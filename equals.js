@@ -114,8 +114,8 @@ function subtree(self,other,diff,allow,soft){
                       + "self:" + inspect(self) + '\n'
                       + "other:" + inspect(other) )
 
-    if(ov === p.value)
-      return group(p,x)
+/*    if(ov === p.value)
+      return group(p,x)*/
     return group(p,x)
   }
   function leaf(p){
