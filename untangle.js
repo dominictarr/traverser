@@ -1,20 +1,56 @@
 
 var traverser = require('traverser/traverser2')
   , log = require('logger')
+  , assert = require('assert')
+  , render = require('render/render2')
+
 exports.retangle = retangle
 exports.untangle = untangle
 exports.stringify = stringify
 exports.parse = parse
 
+  function setPath(obj,path,value){
+    for(var i = 0; i < path.length -1; i ++){
+      var key = path[i]
+      if(obj[key])
+        obj = obj[key]
+      else
+        obj[key] = {}
+    }
+    obj[path[path.length - 1]] = value
+  }
+
 function untangle(obj){
   var paths = []
-
-  return traverser(obj,{branch: branch})
+    , reffed = []
+    , reffed_paths = []
+    , seen = []
+    , links = {}
+    , t = traverser(obj,{branch: branch, pre: true})
+//  log('UNTANGLED:',{payload: obj, links: links})
+  return t
   
   function branch(p){
+    if(p.referenced){
+
+      assert.equal(p.index.repeated, p.repeated.indexOf(p.value))
+      if(-1 == reffed.indexOf(p.value)){
+        assert.ok(!p.reference,'reference')
+        reffed_paths[p.index.repeated] = [].concat(p.path)
+        reffed[p.index.repeated] = p.value
+      } else {
+        setPath(links,p.path,reffed_paths[p.index.repeated])        
+      }
+    }
     paths.push([].concat(p.path))      
+    seen.push(p.value)
+    
     if (p.reference) {
-      return {'[Repeated]': paths[p.index.seen]}
+
+//     assert.strictEqual(p.repeated[p.index.repeated],p.value)
+//     assert.strictEqual(reffed[p.index.repeated],p.value, "expected:" + render(reffed[p.index.repeated]) + ' === ' + render(p.value) + '\n, within:' + render(p.repeated) + " \ncopied:" +  render(reffed))
+      
+      return {'[Repeated]': reffed_paths[p.index.repeated]}
     }
     return p.copy()
   }
@@ -28,13 +64,13 @@ function get(obj,path){
 }
 
 function retangle(obj){
-   traverser(obj,{branch: branch})
-  return obj  
+  return traverser(obj,{branch: branch})
+  
   function branch(p){
     if(p.value && p.value['[Repeated]']){
-       p.parent[p.key] = get(obj,p.value['[Repeated]'])
-    }      
-    return p.each()
+       return get(obj,p.value['[Repeated]'])
+    }
+    return p.copy()
   }
 }
 

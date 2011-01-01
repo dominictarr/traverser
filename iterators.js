@@ -42,6 +42,8 @@ exports.sync = {
     return m
   },
   copy: function (object,func){
+    if('object' !== typeof object || object === null)
+      return object
     var m = (object instanceof Array ? [] : {})
     for( key in object){
       var value = object[key]
@@ -102,6 +104,7 @@ function async(object,func,collect,done){
         done()
     }
     function item(){
+    //func(value,key,next,object)
       func(object[keys[i]],keys[i],next,object)
     }
 }

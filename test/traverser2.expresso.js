@@ -128,7 +128,7 @@ exports ['branch and leaf both have sensible defaults'] = function (test){
 
 exports ['can copy objects'] = function (test){
 
-  var list = {list: [0,10,20,{a: 100, b: 200},30,40,[1000,2000,{k: 10000}],50,60,70,80,90,100]}
+  var list = {list: [0,10,20,{a: 100, b: 200},30,40,[1000,2000,{k: 10000}],50,60,70,null,80,90,100]}
     , r = traverser(list, {iterator: 'copy'})
     
   describe(r,'return value of lispify list')

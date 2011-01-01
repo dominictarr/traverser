@@ -1,5 +1,5 @@
 
-var t = require('traverser/untangle')
+var t = require('traverser/untangle2')
   , log = require('logger')
   , equals = require('traverser/equals')
   , inspect = require('inspect')
@@ -7,26 +7,41 @@ exports ['can remove repeats from a object to be JSONed'] = function (test){
   var a
     , x = [a = [1,2,3],a]
     , y = [[1,2,3],[1,2,3]]
-    
+
   test.equal(JSON.stringify(x),JSON.stringify(y))
 
 //  test.deepEqual(x,retangle(untangle(x)))
   test.strictEqual(x[0],x[1])
-
+  log('untangled:',t.untangle(x))
   var z = t.retangle(t.untangle(x))
   test.strictEqual(x[0],x[1])
 }
 exports ['can remove cycles from a object to be JSONed'] = function (test){
-  var x = [1,2,3]
+  var x = [1]
     x.push(x)
     
-  test.strictEqual(x,x[3])
+  test.strictEqual(x,x[1])
+  var _z = t.untangle(x)
 
-  var z = t.retangle(t.untangle(x))
-  test.strictEqual(z,z[3])
+  log('untangled:', _z) 
+
+  var z = t.retangle(_z)
+
+  log('retangled:', z) 
+
+  test.strictEqual(z,z[1])
 }
+exports ['handles null values'] = function (test){
+  var x = [1,2,3,null,4]
+    , $x = t.untangle(x)
+    , _x = t.retangle($x)
+    
+  test.deepEqual(x,_x)
+}
+
+
 exports ['can untangle and serialize to JSON and parse back'] = function (test){
-  var x = [1,2,3], a, b, c = {a : a = [1,2,3], x: x}, e, f, d = [1,2,3,34,x,6534]
+  var x = [10,20,30], a, b, c = {a : a = [1,2,3], x: x}, e, f, d = [1,2,3,34,x,6534]
   x.push(x)
   c.c = c
   var these =
@@ -57,3 +72,4 @@ exports ['can untangle and serialize to JSON and parse back'] = function (test){
   })
 
 }
+//*/

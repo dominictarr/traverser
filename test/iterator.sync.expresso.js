@@ -33,16 +33,21 @@ exports.min = function (test){
     .should.eql(1)
 }
 exports.copy = function (test){
-  var l = [234,543,1,44,5555,534,6,456]
-    , o = {a: 123, b: 123, c:'sdf', l: l}
+  var l = [234,543,1,44,5555,null,534,6,456]
+    , o = {a: 123, b: 123, $: null, c:'sdf', l: l}
+    , n = null
     , r = sync.copy(l,value)
     , r2 = sync.copy(o,value)
+    , r3 = sync.copy(null,value)
     
     describe(r,'copy()')
       .should.eql(l)
 
     describe(r2,'copy()')
       .should.eql(o)
+
+    describe(r3,'copy()')
+      .should.eql(n)
 }
 exports.map = function (test){
   var l = [234,543,1,44,5555,534,6,456]

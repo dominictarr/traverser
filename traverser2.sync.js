@@ -20,7 +20,7 @@ var complex =
   , 'undefined': false
 }
 function isComplex (props){
-  return complex[typeof props.value]
+  return props.value && complex[typeof props.value]
 }
 
 function traverse (object,opts){
