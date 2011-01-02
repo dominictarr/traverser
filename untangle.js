@@ -9,6 +9,14 @@ exports.untangle = untangle
 exports.stringify = stringify
 exports.parse = parse
 
+/*
+this will fail if you use the forbidden keys,
+ '*=','*@' and '*^'
+
+to be totally robust, it should escape them.
+
+instead it throws an exception, which is better than a mysterious error.
+*/
   function setPath(obj,path,value){
     for(var i = 0; i < path.length -1; i ++){
       var key = path[i]
@@ -31,6 +39,11 @@ function untangle(obj){
   return t
   
   function branch(p){
+
+  if(p.value['*$'] || p.value['*='] || p.value['*^'])
+    throw new Error("object uses FORBIDDEN PROPERTY NAMES:"
+      + " '*$','*=' & '*^' have a special meaning in untangle.")
+
     if(p.referenced){
 
       assert.equal(p.index.repeated, p.repeated.indexOf(p.value))
