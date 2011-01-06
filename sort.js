@@ -7,6 +7,9 @@ module.exports =
   function sort(depends) {
     var levels = []
       , requires = {}
+      
+    if(Object.keys(depends).length == 0)
+      return []
     
     traverse(depends,{branch: roots})
 

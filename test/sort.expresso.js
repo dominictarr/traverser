@@ -53,3 +53,7 @@ var var0,var1,var2,var3,
 
   checkSort(graph)
 }
+
+exports ['empty tree returns empty list'] = function (test){
+  test.deepEqual(sort({}),[])
+}
