@@ -2,7 +2,6 @@
 
 var async = require('traverser/iterators').async
   , describe = require('should').describe
-  , log = require('logger')
 /*
   each
   find
@@ -13,13 +12,11 @@ var async = require('traverser/iterators').async
 */
 
 function value (v,k,n,o){
-//  log(v,k,n,o)
   describe(v,'value at object[' + k + '] in ' + arguments.callee.name)
     .should.eql(o[k],v)
   n(v)
 }
 function valuePlus (v,k,n,o){
-//  log(v,k,n,o)
   describe(v,'value at object[' + k + '] in ' + arguments.callee.name)
     .should.eql(o[k],v)
   n('object' === typeof v ? v : v + 1)
@@ -132,7 +129,6 @@ exports.find = function (test){
   }
   function isString (v,k,n,o){
     value(v,k,function(){},o)
-    log('string?',v)
     n ('string' == typeof v)
   }
 }

@@ -2,20 +2,20 @@
 
 var describe = require('should').describe
   , traverser = require('traverser')
-  , inspect = require('inspect')
-  , log = require('logger')
-
+  , inspect = require('util').inspect
+  , should = require('should')
+  
 exports ['calls search function with properties object'] = function(test){
   var obj = {}
   traverser(obj,function (props,next){//calls this function on every element.
-    var it = describe(props,"search properties")
+    var it = props
       it.should.have.property ('path').eql([]).instanceof(Array)
       it.should.have.property ('parent',null)
       it.should.have.property ('value',obj)
       it.should.have.property ('key',null)
       it.should.have.property ('each').a('function')
       it.should.have.property ('next').a('function')
-    log('next',next.toString())
+    //log('next',next.toString())
     next()
   },test.finish)
 }
@@ -29,8 +29,7 @@ exports ['iterates over a list'] = function(test){
   traverser(list,{branch: branch, leaf: leaf, done: finished})
   
   function leaf (props,next){
-    var it = 
-      describe(props,"props object iterating over a list")
+    var it = props
     it.should.have.property('parent', list)
     it.should.have.property('key','' + (leafCounter ++))
     it.should.have.property('value',list[props.key])
@@ -42,7 +41,7 @@ exports ['iterates over a list'] = function(test){
 
   function branch (props,next){//calls this function on every element.
 
-    var it = describe(props,"properties on a branch")
+    var it = props
       it.should.have.property ('path').eql([]).instanceof(Array)
       it.should.have.property ('parent',null)
       it.should.have.property ('value',list)
@@ -53,7 +52,7 @@ exports ['iterates over a list'] = function(test){
     function c(r){
     branchPost = true
 
-    var it = describe(props,"properties on a branch, after iterating")
+    var it = props
       it.should.have.property ('path').eql([]).instanceof(Array)
       it.should.have.property ('parent',null)
       it.should.have.property ('value',list)
@@ -64,9 +63,9 @@ exports ['iterates over a list'] = function(test){
   }
 
   function finished(){
-    describe(leafCalled,"whether leaf function is called")
+    leafCalled
       .should.be.ok
-    describe(branchPost,"whether branch function is called after iterating")
+    branchPost
       .should.be.ok
     test.finish()
   }
@@ -95,8 +94,7 @@ exports ['iterates over a tree'] = function (test){
     props.each(c)
     function c(){
       branchCounter ++ 
-      var it = 
-        describe(props,"properties on a branch, after iterating")
+      var it = props
       it.should.have.property('parent',_parent)
       it.should.have.property('path').eql(_path)
       it.should.have.property('ancestors').eql(_ancestors)
@@ -106,9 +104,9 @@ exports ['iterates over a tree'] = function (test){
     }
   }
   function finished(){
-    describe(leafCounter,"number of times leaf() is called")
+    leafCounter
       .should.eql(16)
-    describe(branchCounter,"number of times branch() is called")
+    branchCounter
       .should.eql(4)
     test.finish()
   }
@@ -120,10 +118,9 @@ exports ['map to a string'] = function (test){
     , r = traverser(list, {branch: branch, done:returned})
     
   function returned(r){
-    describe(r,'return value of lispify list')
-      .should.eql('(0 10 20 (100 200) 30 40 (1000 2000 (10000)) 50 60 70 80 90 100)')
+    r.should.eql('(0 10 20 (100 200) 30 40 (1000 2000 (10000)) 50 60 70 80 90 100)')
      
-    log(r)
+    //log(r)
     test.finish()
   }
   function branch (p,next){
@@ -141,13 +138,12 @@ exports ['branch and leaf both have sensible defaults'] = function (test){
   traverser(list, {leaf: invert, iterator: 'map', done:returned})
 
   function returned(r){
-    log('reaturned',r)
-    describe(r,'return value of lispify list')
-      .should.eql([0,-10,-20,[-100,-200],-30,-40,[-1000,-2000,[-10000]],-50,-60,-70,-80,-90,-100])
+    //log('reaturned',r)
+    r.should.eql([0,-10,-20,[-100,-200],-30,-40,[-1000,-2000,[-10000]],-50,-60,-70,-80,-90,-100])
     test.finish()
   }
   function invert(props,next){
-    log('invert!',props.value)
+    //log('invert!',props.value)
     next( -1 * props.value )
   }
   function map(props,next){//iterate should do this by default
@@ -162,8 +158,7 @@ exports ['can copy objects'] = function (test){
   traverser(list, {iterator: 'copy', done:returned})
   function returned(r){
     
-    describe(r,'return value of lispify list')
-      .should.eql(list)
+    r.should.eql(list)
     test.finish()
   }
 }
@@ -173,23 +168,22 @@ exports ['can copy objects'] = function (test){
 function checkRefs (obj,done){
   traverser(obj, {branch: branch, /*leaf: leaf,*/ done: c})
   function c(r){
-    describe(referenced,'whether a reference was detected')
+    referenced
       .should.be.true
 
-    describe(circular,'whether a circular reference was detected')
+    circular
       .should.be.true
 
     done()
   }
   function branch(props,next){
-    var it = 
-      describe(props,"props in a circular tree")
+    var it = props
     it.should.have.property('circular').a('boolean')
     it.should.have.property('reference').a('boolean')
     it.should.have.property('seen').instanceof(Array)
     
     if(props.reference == true){
-      describe(props.seen,"objects already seen")
+      props.seen
         .should.contain(props.value)
       referenced = true
 
@@ -199,7 +193,7 @@ function checkRefs (obj,done){
         }
     } else {
       it.should.have.property('circular',false)
-      describe(props.ancestors,"ancestors at " + inspect(props.value))
+      props.ancestors
         .should.not.contain(props.value)
     }
     props.each(next)
@@ -234,9 +228,7 @@ exports ['easy to render a string'] = function (test){
   traverser(x, {branch: branch, leaf: leaf, done: c})
   
   function c(r){
-    describe(r,"convert tangled references to a string")
-      .should.eql("{{12 3 4} '!!!' @ {1 2 3 ^ 5 6 '!!!'}}")
-    log(r)
+    r.should.eql("{{12 3 4} '!!!' @ {1 2 3 ^ 5 6 '!!!'}}")
     test.finish()
   }
   function leaf (p,next){
@@ -262,8 +254,7 @@ exports ['can pre-traverse to check for references'] = function (test){
   traverser(list,{branch: branch, pre: true, done:test.finish})
   
   function branch(p,next){
-    describe(p,"props at root on a cicular tree")
-      .should.have.property('referenced',true)
+    p.should.have.property('referenced',true)
     next()
   } 
 }
@@ -276,10 +267,7 @@ exports ['can pre-traverse to check for references, complex'] = function (test){
   traverser(x,{branch: branch, leaf: leaf, pre: true, done:returned})
 
   function returned(r){
-    log(r)
-    log(x)
-    describe(r,"rendered tangled object with references marked")
-      .should.eql('$0=(complex->$1=(12 3 4) simple->!!! self->[$0] list->(1 2 3 [$1] 5 6 !!!))')
+    r.should.eql('$0=(complex->$1=(12 3 4) simple->!!! self->[$0] list->(1 2 3 [$1] 5 6 !!!))')
 
     test.finish()
   }
@@ -296,8 +284,7 @@ exports ['can pre-traverse to check for references, complex'] = function (test){
     p.map(c)
     function c (map){
       //reference isn't unset right.
-      describe(p.referenced,'p.referenced after iterating')
-        .should.eql(wasReferenced)
+      p.referenced.should.eql(wasReferenced)
       if(p.referenced)
         test.equal ('$-1' != name,true, 'expected name to not equal $-1')
 
@@ -338,8 +325,8 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
     } else {
       r = traverser(e[0],{branch: branch, leaf: leaf})
     }
-    log(k,r)
-    log(k,e[0])
+    //log(k,r)
+    //log(k,e[0])
 
     test.equal(branchChecked, e[2])
     test.equal(r,e[1])
@@ -372,13 +359,11 @@ exports ['has min and max iterators'] = function (test){
   var obj = [10,20,30,40,[200,4,6600,2],564]
   traverser(obj,{iterator: 'max',done: c})
   function c(max){
-    describe (max, 'max in ' + inspect(obj))
-      .should.eql(6600)
+    max.should.eql(6600)
   
     traverser(obj,{iterator: 'min',done: c})
     function c(min){
-      describe (min, 'min in ' + inspect(obj))
-        .should.eql(2)
+      min.should.eql(2)
       test.finish()
     }
   }

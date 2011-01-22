@@ -1,8 +1,7 @@
 //test iterator.sync.expresso
 
 var sync = require('traverser/iterators').sync
-  , describe = require('should').describe
-
+  , should = require('should')  
 /*
   each
   find
@@ -22,15 +21,13 @@ exports.max = function (test){
   var l = [1,234,543,44,5555,534,6,456]
     , r = sync.max(l,value)
     
-  describe(r,'max()')
-    .should.eql(5555)
+  test.equal(r,5555)
 }
 exports.min = function (test){
   var l = [234,543,1,44,5555,534,6,456]
     , r = sync.min(l,value)
     
-  describe(r,'min()')
-    .should.eql(1)
+  test.equal(r,1)
 }
 exports.copy = function (test){
   var l = [234,543,1,44,5555,null,534,6,456]
@@ -40,14 +37,9 @@ exports.copy = function (test){
     , r2 = sync.copy(o,value)
     , r3 = sync.copy(null,value)
     
-    describe(r,'copy()')
-      .should.eql(l)
-
-    describe(r2,'copy()')
-      .should.eql(o)
-
-    describe(r3,'copy()')
-      .should.eql(n)
+    test.deepEqual(r,l)
+    test.deepEqual(r2,o)
+    test.deepEqual(r3,n)
 }
 exports.map = function (test){
   var l = [234,543,1,44,5555,534,6,456]
@@ -56,11 +48,8 @@ exports.map = function (test){
     , r = sync.map(l,value)
     , r2 = sync.map(o,value)
     
-    describe(r,'map()')
-      .should.eql(l)
-
-    describe(r2,'map()')
-      .should.eql(m)
+    test.deepEqual(r,l)
+    test.deepEqual(r2,m)
 }
 exports.each = function (test){
   var l = [234,543,1,44,5555,534,6,456]
@@ -71,11 +60,11 @@ exports.each = function (test){
 
     sync.each(l,cnt)
 
-    describe(count,"calls of each()").should.eql(8)
+    test.equal(count,8)
     count = 0
 
     sync.each(o,cnt)
-    describe(count,"calls of each()").should.eql(4)
+    test.equal(count,4)
     
     function cnt(){
       count ++
@@ -86,8 +75,9 @@ exports.find = function (test){
     , o = {a: 123, b: 123, c:'sdf', l: l}
     , r = sync.find(l,isString)
     , r2 = sync.find(o,isString)
-      describe(r,'find() string in ' + l).should.eql('ffffffffffff')
-      describe(r2,'find() string in ' + o).should.eql('sdf')
+
+  test.equal(r,'ffffffffffff')
+  test.equal(r2,'sdf')
 
   function isString (v,k,o){
     value(v,k,o)
