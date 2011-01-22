@@ -10,6 +10,9 @@
     "lib": "",
     "example": "examples"
   },
+  "dependencies": {
+    "curry" : "*"
+  },
   "modules": {
     "traverser.sync": "traverser.sync",
     "iterators": "iterators"
