@@ -1,34 +1,31 @@
 //traverser2.expresso.js
 
 var describe = require('should').describe
-  , traverser = require('traverser/traverser2')
+  , traverser = require('traverser/traverser.sync')
   , inspect = require('inspect')
   , log = require('logger')
 
 exports ['calls search function with properties object'] = function(test){
   var obj = {}
-  traverser(obj,function (props,next){//calls this function on every element.
+  traverser(obj,function (props){//calls this function on every element.
     var it = describe(props,"search properties")
       it.should.have.property ('path').eql([]).instanceof(Array)
       it.should.have.property ('parent',null)
       it.should.have.property ('value',obj)
       it.should.have.property ('key',null)
       it.should.have.property ('each').a('function')
-      it.should.have.property ('next').a('function')
-    log('next',next.toString())
-    next()
-  },test.finish)
+  })
 }
+
 
 
 exports ['iterates over a list'] = function(test){
   var list = [0,10,20,30,40,50,60,70,80,90,100]
     , leafCalled = false
     , leafCounter = 0
-    , branchPost = false
-  traverser(list,{branch: branch, leaf: leaf, done: finished})
+  traverser(list,{branch: branch, leaf: leaf})
   
-  function leaf (props,next){
+  function leaf (props){
     var it = 
       describe(props,"props object iterating over a list")
     it.should.have.property('parent', list)
@@ -37,10 +34,9 @@ exports ['iterates over a list'] = function(test){
     it.should.have.property('path').eql([props.key])
     it.should.have.property('ancestors').eql([list])
     leafCalled = true;
-    next()
   }
 
-  function branch (props,next){//calls this function on every element.
+  function branch (props){//calls this function on every element.
 
     var it = describe(props,"properties on a branch")
       it.should.have.property ('path').eql([]).instanceof(Array)
@@ -49,9 +45,7 @@ exports ['iterates over a list'] = function(test){
       it.should.have.property ('key',null)
       it.should.have.property ('each').a('function')
 
-    props.each(c)
-    function c(r){
-    branchPost = true
+    props.each()
 
     var it = describe(props,"properties on a branch, after iterating")
       it.should.have.property ('path').eql([]).instanceof(Array)
@@ -59,17 +53,9 @@ exports ['iterates over a list'] = function(test){
       it.should.have.property ('value',list)
       it.should.have.property ('key',null)
       it.should.have.property ('each').a('function')
-      next(r)
-    }
   }
-
-  function finished(){
-    describe(leafCalled,"whether leaf function is called")
-      .should.be.ok
-    describe(branchPost,"whether branch function is called after iterating")
-      .should.be.ok
-    test.finish()
-  }
+  describe(leafCalled,"whether leaf function is called")
+    .should.be.ok
 }
 
 exports ['iterates over a tree'] = function (test){
@@ -78,110 +64,96 @@ exports ['iterates over a tree'] = function (test){
     , leafCalled = false
     , leafCounter = 0
     , branchCounter = 0
-  traverser(list,{branch: branch, leaf: leaf,done:finished})
+  traverser(list,{branch: branch, leaf: leaf})
 
-  function leaf(props,next){
+  function leaf(props){
     leafCounter ++
-    next()
   }
 
-  function branch(props,next){
+  function branch(props){
     var _parent = props.parent
       , _path = [].concat(props.path)
       , _ancestors = [].concat(props.ancestors)
       , _key = props.key
       , _value = props.value
       
-    props.each(c)
-    function c(){
+      props.each()
       branchCounter ++ 
-      var it = 
-        describe(props,"properties on a branch, after iterating")
+    var it = describe(props,"properties on a branch, after iterating")
       it.should.have.property('parent',_parent)
       it.should.have.property('path').eql(_path)
       it.should.have.property('ancestors').eql(_ancestors)
       it.should.have.property('key',_key)
       it.should.have.property('value',_value)
-      next()
-    }
   }
-  function finished(){
-    describe(leafCounter,"number of times leaf() is called")
-      .should.eql(16)
-    describe(branchCounter,"number of times branch() is called")
-      .should.eql(4)
-    test.finish()
-  }
+
+  describe(leafCounter,"number of times leaf() is called")
+    .should.eql(16)
+  describe(branchCounter,"number of times branch() is called")
+    .should.eql(4)
 }
-/**/
+
+/*
+  this feels like it is going way smoother than the first time.
+  
+  ...although, havn't tried anything hard yet.
+*/
+
 exports ['map to a string'] = function (test){
 
   var list = [0,10,20,[100,200],30,40,[1000,2000,[10000]],50,60,70,80,90,100]
-    , r = traverser(list, {branch: branch, done:returned})
+    , r = traverser(list, {branch: branch})
     
-  function returned(r){
-    describe(r,'return value of lispify list')
-      .should.eql('(0 10 20 (100 200) 30 40 (1000 2000 (10000)) 50 60 70 80 90 100)')
-     
-    log(r)
-    test.finish()
-  }
-  function branch (p,next){
-    p.map(c)
-    function c(map){
-      next('(' + map.join(' ') + ')')
-    }
+  describe(r,'return value of lispify list')
+    .should.eql('(0 10 20 (100 200) 30 40 (1000 2000 (10000)) 50 60 70 80 90 100)')
+    
+  log(r)
+  function branch (p){
+    return '(' + p.map().join(' ') + ')'
   }
 }
-/**/
+
 exports ['branch and leaf both have sensible defaults'] = function (test){
 
   var list = [0,10,20,[100,200],30,40,[1000,2000,[10000]],50,60,70,80,90,100]
+    , r = traverser(list, {leaf: invert, iterator: 'map'})
+    
+  describe(r,'return value of lispify list')
+    .should.eql([0,-10,-20,[-100,-200],-30,-40,[-1000,-2000,[-10000]],-50,-60,-70,-80,-90,-100])
   
-  traverser(list, {leaf: invert, iterator: 'map', done:returned})
-
-  function returned(r){
-    log('reaturned',r)
-    describe(r,'return value of lispify list')
-      .should.eql([0,-10,-20,[-100,-200],-30,-40,[-1000,-2000,[-10000]],-50,-60,-70,-80,-90,-100])
-    test.finish()
-  }
-  function invert(props,next){
-    log('invert!',props.value)
-    next( -1 * props.value )
-  }
-  function map(props,next){//iterate should do this by default
-    props.map(next)
+  function invert(props){
+    return -1 * props.value 
   }
 }
-
 
 exports ['can copy objects'] = function (test){
 
-  var list = {list: [0,10,20,{a: 100, b: 200},30,40,[1000,2000,{k: 10000}],50,60,70,80,90,100]}
-  traverser(list, {iterator: 'copy', done:returned})
-  function returned(r){
+  var list = {list: [0,10,20,{a: 100, b: 200},30,40,[1000,2000,{k: 10000}],50,60,70,null,80,90,100]}
+    , r = traverser(list, {iterator: 'copy'})
     
-    describe(r,'return value of lispify list')
-      .should.eql(list)
-    test.finish()
-  }
+  describe(r,'return value of lispify list')
+    .should.eql(list)
 }
 
-//check that reference and circular are correct.
-
-function checkRefs (obj,done){
-  traverser(obj, {branch: branch, /*leaf: leaf,*/ done: c})
-  function c(r){
-    describe(referenced,'whether a reference was detected')
-      .should.be.true
-
-    describe(circular,'whether a circular reference was detected')
-      .should.be.true
-
-    done()
-  }
-  function branch(props,next){
+exports ['has a property for reference and circular'] = function (test){
+  var referenced = false
+    , circular = false
+  var list = {}
+      list.list = list
+  var x = {complex: [12,3,4], simple: '!!!'}
+      x.self = x
+      x.list = [1,2,3,x.complex,5,6,x.simple]
+  
+  var r = traverser(list, {branch: branch})
+    referenced = false
+  var r = traverser(x, {branch: branch})
+    
+  describe(referenced,'whether a reference was detected')
+    .should.be.true
+  describe(circular,'whether a circular reference was detected')
+    .should.be.true
+  
+  function branch(props){
     var it = 
       describe(props,"props in a circular tree")
     it.should.have.property('circular').a('boolean')
@@ -195,34 +167,15 @@ function checkRefs (obj,done){
 
       if(props.circular){
          circular = true
-        return next()
+        return
         }
     } else {
       it.should.have.property('circular',false)
       describe(props.ancestors,"ancestors at " + inspect(props.value))
         .should.not.contain(props.value)
     }
-    props.each(next)
+    props.each()
   }
-
-}
-
-exports ['has a property for reference and circular'] = function (test){
-  var referenced = false
-    , circular = false
-
-  var list = {}
-      list.list = list
-
-  var x = {complex: [12,3,4], simple: '!!!'}
-      x.self = x
-      x.list = [1,2,3,x.complex,5,6,x.simple]
-      
-    checkRefs (list,c)
-    function c (){
-      checkRefs (x,test.finish)
-    }
-   
 }
 
 exports ['easy to render a string'] = function (test){
@@ -231,84 +184,79 @@ exports ['easy to render a string'] = function (test){
       x.self = x
       x.list = [1,2,3,x.complex,5,6,x.simple]
 
-  traverser(x, {branch: branch, leaf: leaf, done: c})
-  
-  function c(r){
-    describe(r,"convert tangled references to a string")
-      .should.eql("{{12 3 4} '!!!' @ {1 2 3 ^ 5 6 '!!!'}}")
-    log(r)
-    test.finish()
+  var r = traverser(x, {branch: branch, leaf: leaf})
+  describe(r,"convert tangled references to a string")
+    .should.eql("{{12 3 4} '!!!' @ {1 2 3 ^ 5 6 '!!!'}}")
+  log(r)
+
+  function leaf (p){
+    return 'string' === typeof p.value ? "'" + p.value + "'" : p.value
   }
-  function leaf (p,next){
-    next ( 'string' === typeof p.value ? "'" + p.value + "'" : p.value )
-  }
-  function branch (p,next){
+
+  function branch (p){
     if(p.reference)
-      return next ( p.circular ? '@' : '^' )
+      return p.circular ? '@' : '^'
 
     var op = p instanceof Array ? '[' : '{'
       , cl = p instanceof Array ? ']' : '}'
-    p.map(c)
-    function c(map){
-      next ( op + map.join(' ') + cl )
-    }
+    return op + p.map().join(' ') + cl    
   }
 }
-
+/**/
+/*
+  it was SO much easier to do it this way it was amazing.
+  
+  ideas to expand this:
+    what about a use a function to generate the objects?
+    & async looping
+    optionally initial pass to find repeats & give paths to original
+    
+    make the properties object immutable and use prototypes to layer new data on it
+      - make path & ancestors lazy getters
+*/
 
 exports ['can pre-traverse to check for references'] = function (test){
    var list = {}
       list.list = list
-  traverser(list,{branch: branch, pre: true, done:test.finish})
+  traverser(list,{branch: branch, pre: true})
   
-  function branch(p,next){
+  function branch(p){
     describe(p,"props at root on a cicular tree")
       .should.have.property('referenced',true)
-    next()
   } 
 }
 
-  
 exports ['can pre-traverse to check for references, complex'] = function (test){
   var x = {complex: [12,3,4], simple: '!!!'}
       x.self = x
       x.list = [1,2,3,x.complex,5,6,x.simple]
-  traverser(x,{branch: branch, leaf: leaf, pre: true, done:returned})
+  var r = traverser(x,{branch: branch, leaf: leaf, pre: true})
+  log(r)
+  log(x)
+  describe(r,"rendered tangled object with references marked")
+    .should.eql('$0=(complex->$1=(12 3 4) simple->!!! self->[$0] list->(1 2 3 [$1] 5 6 !!!))')
 
-  function returned(r){
-    log(r)
-    log(x)
-    describe(r,"rendered tangled object with references marked")
-      .should.eql('$0=(complex->$1=(12 3 4) simple->!!! self->[$0] list->(1 2 3 [$1] 5 6 !!!))')
-
-    test.finish()
-  }
   function key(p,rest){
     return (isNaN(p.key) ? p.key +'->' : '') + rest }
-  function leaf(p,next){
-    next( key(p, p.value) ) }
-  function branch(p,next){
+  function leaf(p){
+    return key(p, p.value) }
+  function branch(p){
     var name = '$' + p.index.repeated // i should store the index the first time.
-      , wasReferenced = p.referenced
     if(p.reference)
-      return next ( key(p, '[' + name + ']') )
+      return key(p, '[' + name + ']') 
 
-    p.map(c)
-    function c (map){
-      //reference isn't unset right.
-      describe(p.referenced,'p.referenced after iterating')
-        .should.eql(wasReferenced)
-      if(p.referenced)
-        test.equal ('$-1' != name,true, 'expected name to not equal $-1')
-
-      next( key(p, (p.referenced ? name + '=' : '')  + '(' + map.join(' ') + ')' ) )
-    }
+    return  key(p, (p.referenced ? name + '=' : '')  + '(' + p.map().join(' ') + ')' )
   } 
 }
-/**/
 /*
-//this feature probably works, but I'm getting bored of converting sync to async.
- 
+  what about functions? should they be treated as branches, leaves, or both?
+  
+  simple way is to pass in a function to decide...
+  ...be useful if you want to treat particular things as branches or not.
+
+  maybe options to assume it is a 'tree','dag','cyclic' (and don't check for references if it's tree)
+*/
+
 exports ['can control what is considered a branch and what is a leaf'] = function (test){
 
 //for example: function can have properties, so they are branches.
@@ -329,7 +277,7 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
       , [[x],'[function (){return \"SOURCE CODE\"}]',false] ]
     , branchChecked = false
 
-//  study.forEach(function (e,k){
+  study.forEach(function (e,k){
     branchChecked = false
     var r
     if(e[2]) {
@@ -342,8 +290,9 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
     log(k,e[0])
 
     test.equal(branchChecked, e[2])
+
     test.equal(r,e[1])
-  //})
+  })
   
   function key(p,rest){
     return (isNaN(p.key) ? p.key +':' : '') + rest
@@ -366,20 +315,15 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
     return brackets[p.value.constructor.name] != null
   }
 }
-//*/
+
 
 exports ['has min and max iterators'] = function (test){
   var obj = [10,20,30,40,[200,4,6600,2],564]
-  traverser(obj,{iterator: 'max',done: c})
-  function c(max){
-    describe (max, 'max in ' + inspect(obj))
-      .should.eql(6600)
-  
-    traverser(obj,{iterator: 'min',done: c})
-    function c(min){
-      describe (min, 'min in ' + inspect(obj))
-        .should.eql(2)
-      test.finish()
-    }
-  }
+    , max = traverser(obj,{iterator: 'max'})
+    , min = traverser(obj,{iterator: 'min'})
+
+  describe (max, 'max in ' + inspect(obj))
+    .should.eql(6600)
+  describe (min, 'min in ' + inspect(obj))
+    .should.eql(2)
 }

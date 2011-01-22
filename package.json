@@ -1,0 +1,20 @@
+{
+  "name": "traverser",
+  "description": "helper for traversing each item in the tree or graph",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dominictarr/traverser",
+  "repository": "git://github.com/dominictarr/traverser.git",
+  "author": "Dominic Tarr <dominic.tarr@gmail.com>",
+  "main": "traverser",
+  "directories": {
+    "lib": "",
+    "example": "examples"
+  },
+  "modules": {
+    "traverser.sync": "traverser.sync",
+    "iterators": "iterators"
+  },
+  "engines": {
+    "node": "*"
+  }
+}

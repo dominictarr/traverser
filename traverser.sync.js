@@ -1,7 +1,5 @@
-//traverser2.sync
-var inspect = require('inspect')
-  , log = require('logger')
-  , curry = require('curry')
+//traverser.sync
+var curry = require('curry')
   , sync = require('./iterators').sync
 
 module.exports = traverse
@@ -51,7 +49,6 @@ function traverse (object,opts){
         { parent: null
         , key: null
         , value: object
-        , before: true
         , circular: false
         , reference: false
         , path: [] 

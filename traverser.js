@@ -1,6 +1,6 @@
 //traverser2
 var inspect = require('inspect')
-  , log = require('logger')
+//  , log = require('logger')
   , curry = require('curry')
   , sync = require('./iterators').sync
   , async = require('./iterators').async

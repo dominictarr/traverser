@@ -1,5 +1,5 @@
 //iterators
-var log = require('logger')
+//var log = require('logger')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~
