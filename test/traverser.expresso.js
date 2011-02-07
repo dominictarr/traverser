@@ -1,9 +1,10 @@
 //traverser2.expresso.js
 
 var should = require('should')
-  , traverser = require('traverser/traverser.sync')
+  , traverser = require('../traverser.sync')
+  , test = require('assert')
 
-exports ['calls search function with properties object'] = function(test){
+exports ['calls search function with properties object'] = function(){
   var obj = {}
   traverser(obj,function (props){//calls this function on every element.
     var it = props
@@ -17,7 +18,7 @@ exports ['calls search function with properties object'] = function(test){
 
 
 
-exports ['iterates over a list'] = function(test){
+exports ['iterates over a list'] = function(){
   var list = [0,10,20,30,40,50,60,70,80,90,100]
     , leafCalled = false
     , leafCounter = 0
@@ -54,7 +55,7 @@ exports ['iterates over a list'] = function(test){
   leafCalled.should.be.ok
 }
 
-exports ['iterates over a tree'] = function (test){
+exports ['iterates over a tree'] = function (){
 
   var list = [0,10,20,[100,200],30,40,[1000,2000,[10000]],50,60,70,80,90,100]
     , leafCalled = false
@@ -93,7 +94,7 @@ exports ['iterates over a tree'] = function (test){
   ...although, havn't tried anything hard yet.
 */
 
-exports ['map to a string'] = function (test){
+exports ['map to a string'] = function (){
 
   var list = [0,10,20,[100,200],30,40,[1000,2000,[10000]],50,60,70,80,90,100]
     , r = traverser(list, {branch: branch})
@@ -105,7 +106,7 @@ exports ['map to a string'] = function (test){
   }
 }
 
-exports ['branch and leaf both have sensible defaults'] = function (test){
+exports ['branch and leaf both have sensible defaults'] = function (){
 
   var list = [0,10,20,[100,200],30,40,[1000,2000,[10000]],50,60,70,80,90,100]
     , r = traverser(list, {leaf: invert, iterator: 'map'})
@@ -117,7 +118,7 @@ exports ['branch and leaf both have sensible defaults'] = function (test){
   }
 }
 
-exports ['can copy objects'] = function (test){
+exports ['can copy objects'] = function (){
 
   var list = {list: [0,10,20,{a: 100, b: 200},30,40,[1000,2000,{k: 10000}],50,60,70,null,80,90,100]}
     , r = traverser(list, {iterator: 'copy'})
@@ -125,7 +126,7 @@ exports ['can copy objects'] = function (test){
   r.should.eql(list)
 }
 
-exports ['has a property for reference and circular'] = function (test){
+exports ['has a property for reference and circular'] = function (){
   var referenced = false
     , circular = false
   var list = {}
@@ -163,7 +164,7 @@ exports ['has a property for reference and circular'] = function (test){
   }
 }
 
-exports ['easy to render a string'] = function (test){
+exports ['easy to render a string'] = function (){
 
   var x = {complex: [12,3,4], simple: '!!!'}
       x.self = x
@@ -198,7 +199,7 @@ exports ['easy to render a string'] = function (test){
       - make path & ancestors lazy getters
 */
 
-exports ['can pre-traverse to check for references'] = function (test){
+exports ['can pre-traverse to check for references'] = function (){
    var list = {}
       list.list = list
   traverser(list,{branch: branch, pre: true})
@@ -208,7 +209,7 @@ exports ['can pre-traverse to check for references'] = function (test){
   } 
 }
 
-exports ['can pre-traverse to check for references, complex'] = function (test){
+exports ['can pre-traverse to check for references, complex'] = function (){
   var x = {complex: [12,3,4], simple: '!!!'}
       x.self = x
       x.list = [1,2,3,x.complex,5,6,x.simple]
@@ -236,7 +237,7 @@ exports ['can pre-traverse to check for references, complex'] = function (test){
   maybe options to assume it is a 'tree','dag','cyclic' (and don't check for references if it's tree)
 */
 
-exports ['can control what is considered a branch and what is a leaf'] = function (test){
+exports ['can control what is considered a branch and what is a leaf'] = function (){
 
 //for example: function can have properties, so they are branches.
 
@@ -292,7 +293,7 @@ exports ['can control what is considered a branch and what is a leaf'] = functio
 }
 
 
-exports ['has min and max iterators'] = function (test){
+exports ['has min and max iterators'] = function (){
   var obj = [10,20,30,40,[200,4,6600,2],564]
     , max = traverser(obj,{iterator: 'max'})
     , min = traverser(obj,{iterator: 'min'})

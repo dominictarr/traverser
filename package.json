@@ -1,21 +1,17 @@
 {
   "name": "traverser",
-  "description": "helper for traversing each item in the tree or graph",
-  "version": "0.0.0",
+  "description": "lib for traversing trees and graphs",
+  "version": "0.0.1",
   "homepage": "https://github.com/dominictarr/traverser",
   "repository": "git://github.com/dominictarr/traverser.git",
   "author": "Dominic Tarr <dominic.tarr@gmail.com>",
-  "main": "traverser",
+  "main": "./index",
   "directories": {
-    "lib": "",
+    "lib": ".",
     "example": "examples"
   },
   "dependencies": {
     "curry" : "*"
-  },
-  "modules": {
-    "traverser.sync": "traverser.sync",
-    "iterators": "iterators"
   },
   "engines": {
     "node": "*"

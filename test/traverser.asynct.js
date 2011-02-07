@@ -2,7 +2,7 @@
 
 var describe = require('should').describe
   , traverser = require('traverser')
-  , inspect = require('util').inspect
+  , inspect = require('sys').inspect
   , should = require('should')
   
 exports ['calls search function with properties object'] = function(test){

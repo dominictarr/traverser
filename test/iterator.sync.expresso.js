@@ -1,7 +1,7 @@
 //test iterator.sync.expresso
 
 var sync = require('traverser/iterators').sync
-  , should = require('should')  
+  , test = require('assert')
 /*
   each
   find
@@ -11,25 +11,26 @@ var sync = require('traverser/iterators').sync
   max
 */
 
+
 function value (v,k,o){
-  describe(v,'value at object[' + k + '] in ' + arguments.callee.name)
-    .should.eql(o[k],v)
+
+  test.deepEqual(v,o[k])
   return v
 }
 
-exports.max = function (test){
+exports.max = function (){
   var l = [1,234,543,44,5555,534,6,456]
     , r = sync.max(l,value)
     
   test.equal(r,5555)
 }
-exports.min = function (test){
+exports.min = function (){
   var l = [234,543,1,44,5555,534,6,456]
     , r = sync.min(l,value)
     
   test.equal(r,1)
 }
-exports.copy = function (test){
+exports.copy = function (){
   var l = [234,543,1,44,5555,null,534,6,456]
     , o = {a: 123, b: 123, $: null, c:'sdf', l: l}
     , n = null
@@ -41,7 +42,7 @@ exports.copy = function (test){
     test.deepEqual(r2,o)
     test.deepEqual(r3,n)
 }
-exports.map = function (test){
+exports.map = function (){
   var l = [234,543,1,44,5555,534,6,456]
     , o = {a: 123, b: 123, c:'sdf', l: l}
     , m = [123,123,'sdf',l]
@@ -51,7 +52,7 @@ exports.map = function (test){
     test.deepEqual(r,l)
     test.deepEqual(r2,m)
 }
-exports.each = function (test){
+exports.each = function (){
   var l = [234,543,1,44,5555,534,6,456]
     , o = {a: 123, b: 123, c:'sdf', l: l}
     , count = 0
@@ -70,7 +71,7 @@ exports.each = function (test){
       count ++
     }
 }
-exports.find = function (test){
+exports.find = function (){
   var l = [234,543,1,44,5555,'ffffffffffff',534,6,456]
     , o = {a: 123, b: 123, c:'sdf', l: l}
     , r = sync.find(l,isString)
