@@ -1,7 +1,7 @@
 {
   "name": "traverser",
   "description": "lib for traversing trees and graphs",
-  "version": "0.0.2-1",
+  "version": "0.0.2-2",
   "homepage": "https://github.com/dominictarr/traverser",
   "repository": "git://github.com/dominictarr/traverser.git",
   "author": "Dominic Tarr <dominic.tarr@gmail.com>",

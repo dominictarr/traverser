@@ -68,40 +68,6 @@ function traverse (object,opts,done){
         + ' try one of [' + Object.keys(cont) + ']')
     }
 
-  var props = 
-        { parent: null
-        , key: null
-        , value: object
-        , before: true
-        , circular: false
-        , reference: false
-        , path: [] 
-        , seen: []
-        , ancestors: []
-        , iterate: curry([opts.iterator],iterate)
-        }
-
-  //setup iterator functions -- DIFFERENT IF ASYNC
-  Object.keys(cont).forEach(function(key){
-    var func = cont[key]
-    props[key] = curry([func],iterate)
-  })
-
-  if(opts.pre){
-    props.referenced = false
-    var refs = []
-    traverse(object, {branch: check})
-    
-    function check(p){
-      if(p.reference)
-        refs.push(p.value)
-      else
-        p.each()
-    }
-
-    props.repeated = refs
-  }
-        
   function iterate(iterator,done){
     var _parent = props.parent
       , _key = props.key
@@ -130,6 +96,42 @@ function traverse (object,opts,done){
       if(opts.async) done(r)
       return r //returned will be ignored if async
     }
+  }
+
+
+  var props = 
+        { parent: null
+        , key: null
+        , value: object
+        , before: true
+        , circular: false
+        , reference: false
+        , path: [] 
+        , seen: []
+        , ancestors: []
+        , iterate: curry([opts.iterator],iterate)
+        }
+
+  //setup iterator functions -- DIFFERENT IF ASYNC
+  Object.keys(cont).forEach(function(key){
+    var func = cont[key]
+    props[key] = curry([func],iterate)
+  })
+
+  if(opts.pre){
+    props.referenced = false
+    var refs = []
+    
+    function check(p){
+      if(p.reference)
+        refs.push(p.value)
+      else
+        p.each()
+    }
+
+    traverse(object, {branch: check})
+
+    props.repeated = refs
   }
 
   function makeCall(value,key,next){//next func here if async.
