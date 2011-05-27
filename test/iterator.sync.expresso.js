@@ -1,6 +1,6 @@
 //test iterator.sync.expresso
 
-var sync = require('traverser/iterators').sync
+var sync = require('../iterators').sync
   , test = require('assert')
 /*
   each

@@ -1,4 +1,4 @@
-var traverser = require('../traverser.sync')
+var traverser = require('../traverser')
   , assert = require('assert')
 
 exports ['calls search function with properties object'] = function(){
