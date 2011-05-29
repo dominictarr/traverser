@@ -45,6 +45,8 @@ collect all leaves in a tree. (only functions and primitives)
         return leaves
     }
 
+    traverser([1,2,{},3,["x"]],{leaf: leaves})
+
     console.log(leaves([1,2,{},3,["x"]]))
     //[1,2,3,'x']
     
