@@ -95,3 +95,6 @@ each function is passed one arg, a properties object which describes the state o
 
 ###see https://github.com/dominictarr/trees for more examples.###
 
+##License
+
+Mit/Apache2
