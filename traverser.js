@@ -2,13 +2,14 @@
 var curry = require('curry')
   , sync = require('./iterators').sync
 
-module.exports = traverse
+exports = module.exports = traverse
 exports.isObject = isObject
 exports.isComplex = isComplex
 
 function isObject (props){
   return ('object' === typeof props.value)
 }
+
 var complex =
   { 'function': true
   , 'object': true

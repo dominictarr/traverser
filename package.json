@@ -5,11 +5,6 @@
   "homepage": "https://github.com/dominictarr/traverser",
   "repository": "git://github.com/dominictarr/traverser.git",
   "author": "Dominic Tarr <dominic.tarr@gmail.com>",
-  "main": "./traverser.sync",
-  "directories": {
-    "lib": ".",
-    "example": "examples"
-  },
   "dependencies": {
     "curry" : "0.0.x"
   },
